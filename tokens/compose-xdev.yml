@@ -6,7 +6,7 @@
 
 services:
   fabric-x-committer-test-node:
-    image: ghcr.io/hyperledger/fabric-x-committer-test-node:0.1.7
+    image: ghcr.io/hyperledger/fabric-x-committer-test-node:1.0.4
     container_name: test-committer
     networks:
       - test
