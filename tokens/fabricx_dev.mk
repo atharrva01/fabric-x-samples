@@ -33,11 +33,13 @@ start-fabric:
 	@$(CONTAINER_CLI) network inspect fabric_test >/dev/null 2>&1 || $(CONTAINER_CLI) network create fabric_test
 	@$(CONTAINER_CLI) compose -f compose-xdev.yml up -d --wait && sleep 2
 	@echo "install namespace:"
-	@go tool fxconfig namespace create token_namespace --channel=arma --orderer=localhost:7050 --mspID=Org1MSP \
-		--mspConfigPath=crypto/peerOrganizations/org1.example.com/users/channel_admin@org1.example.com/msp \
-		--pk=crypto/peerOrganizations/org1.example.com/users/endorser@org1.example.com/msp/signcerts/endorser@org1.example.com-cert.pem
-	@until go tool fxconfig namespace list --endpoint=localhost:7001 2>/dev/null | grep -q token_namespace; do sleep 1; echo "waiting for namespace to be created..."; done
-	@go tool fxconfig namespace list --endpoint=localhost:7001
+	@FXCONFIG_MSP_LOCALMSPID=Org1MSP \
+		FXCONFIG_MSP_CONFIGPATH=crypto/peerOrganizations/org1.example.com/users/channel_admin@org1.example.com/msp \
+		FXCONFIG_ORDERER_ADDRESS=localhost:7050 \
+		FXCONFIG_ORDERER_CHANNEL=arma \
+		go tool fxconfig namespace create token_namespace --policy="OR('Org1MSP.member')" --endorse --submit
+	@until FXCONFIG_QUERIES_ADDRESS=localhost:7001 go tool fxconfig namespace list 2>/dev/null | grep -q token_namespace; do sleep 1; echo "waiting for namespace to be created..."; done
+	@FXCONFIG_QUERIES_ADDRESS=localhost:7001 go tool fxconfig namespace list
 
 # Stop the docker container.
 .PHONY: stop-fabric
