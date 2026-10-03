@@ -44,7 +44,10 @@ start_anvil() {
         echo "anvil already listening on ${ANVIL_PORT}, reusing it"
         return
     fi
-    anvil --port "$ANVIL_PORT" --chain-id "$ANVIL_CHAIN_ID" >"$ANVIL_LOG" 2>&1 &
+    # --host 0.0.0.0: the owner/issuer/endorser nodes run in containers and reach anvil through
+    # the "anvil:host-gateway" extra_hosts entry (see compose.yml), which resolves to the host's
+    # network interface, not its loopback - binding to 127.0.0.1 only would make that unreachable.
+    anvil --host 0.0.0.0 --port "$ANVIL_PORT" --chain-id "$ANVIL_CHAIN_ID" >"$ANVIL_LOG" 2>&1 &
     echo $! >"${EVM_DIR}/anvil.pid"
     for _ in $(seq 1 30); do
         curl -s -o /dev/null "$ANVIL_RPC" && return
@@ -92,7 +95,10 @@ deploy() {
     # shellcheck disable=SC1091
     source "${EVM_DIR}/addresses.env"
     local pp0_hex
-    pp0_hex="0x$(xxd -p -c0 "$PP_FILE")"
+    # -c0 (unlimited line width) is not honored by every xxd build (some wrap at a fixed default
+    # width regardless), so newlines are stripped explicitly rather than relied on not to appear -
+    # vm.envBytes rejects a hex string broken across lines.
+    pp0_hex="0x$(xxd -p "$PP_FILE" | tr -d '\n')"
 
     local deploy_log="${EVM_DIR}/deploy.log"
     (cd "$WORKDIR" && \
@@ -127,7 +133,7 @@ build_contracts
 
 # shellcheck disable=SC1091
 source "${EVM_DIR}/addresses.env"
-for address in "$EVM_ENDORSER1_ADDRESS" "$EVM_ENDORSER2_ADDRESS" "$EVM_SUBMITTER_OWNER1_ADDRESS" "$EVM_SUBMITTER_OWNER2_ADDRESS"; do
+for address in "$EVM_ENDORSER1_ADDRESS" "$EVM_ENDORSER2_ADDRESS" "$EVM_SUBMITTER_ISSUER_ADDRESS" "$EVM_SUBMITTER_OWNER1_ADDRESS" "$EVM_SUBMITTER_OWNER2_ADDRESS"; do
     fund "$address"
 done
 
