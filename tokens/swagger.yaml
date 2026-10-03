@@ -98,7 +98,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TransferRequest"
+              $ref: "#/components/schemas/IssueRequest"
       operationId: issue
       summary: Issue tokens of any kind to an account
 
@@ -598,9 +598,27 @@ components:
         status: Confirmed
         message: ""
 
+    # Issuer
+    IssueRequest:
+      description: Instructions to issue tokens to an account
+      required:
+        - counterparty
+        - amount
+      type: object
+      properties:
+        amount:
+          $ref: "#/components/schemas/Amount"
+        counterparty:
+          $ref: "#/components/schemas/Counterparty"
+        message:
+          description: optional message that will be sent and stored with the issue transaction
+          type: string
+        tmsId:
+          $ref: "#/components/schemas/TMSID"
+
     # Owner
     TransferRequest:
-      description: Instructions to issue or transfer tokens to an account
+      description: Instructions to transfer tokens to an account
       required:
         - counterparty
         - amount
