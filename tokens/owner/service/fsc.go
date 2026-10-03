@@ -26,6 +26,8 @@ import (
 	"github.com/LFDT-Panurus/panurus/token/services/storage/ttxdb"
 	"github.com/LFDT-Panurus/panurus/token/services/ttx"
 	tok "github.com/LFDT-Panurus/panurus/token/token"
+
+	"github.com/hyperledger/fabric-samples/token-sdk/common/views"
 )
 
 var (
@@ -58,8 +60,10 @@ var (
 	ErrBalance        = errors.New("error getting balance")
 )
 
-func (f FabricSmartClient) Balances(ctx context.Context, wallet string) ([]Amount, error) {
-	mgmt, err := token.GetManagementService(f.node)
+// Balances returns an owner's balance of every token type it holds on one TMS. A nil tmsID selects
+// the node's default TMS.
+func (f FabricSmartClient) Balances(ctx context.Context, wallet string, tmsID *token.TMSID) ([]Amount, error) {
+	mgmt, err := token.GetManagementService(f.node, views.ServiceOpts(tmsID)...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get token management service: %w", err)
 	}
@@ -89,8 +93,10 @@ func (f FabricSmartClient) Balances(ctx context.Context, wallet string) ([]Amoun
 	return am, nil
 }
 
-func (f FabricSmartClient) Balance(ctx context.Context, wallet, code string) (Amount, error) {
-	mgmt, err := token.GetManagementService(f.node)
+// Balance returns an owner's balance of one token type on one TMS. A nil tmsID selects the node's
+// default TMS.
+func (f FabricSmartClient) Balance(ctx context.Context, wallet, code string, tmsID *token.TMSID) (Amount, error) {
+	mgmt, err := token.GetManagementService(f.node, views.ServiceOpts(tmsID)...)
 	if err != nil {
 		return Amount{}, fmt.Errorf("failed to get token management service: %w", err)
 	}
