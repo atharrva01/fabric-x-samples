@@ -41,6 +41,13 @@ teardown: teardown-app teardown-fabric
 test:
 	@./scripts/test.sh
 
+# Test the HTLC swap between the Fabric and EVM legs of PLATFORM=evm. Brings its own network up and
+# down (PLATFORM=evm always, regardless of the environment) - run it on a clean checkout, not
+# alongside another `make start`.
+.PHONY: test-swap
+test-swap:
+	@./scripts/test_swap.sh
+
 # Stop Fabric and the token network.
 .PHONY: stop
 stop: stop-app stop-fabric
