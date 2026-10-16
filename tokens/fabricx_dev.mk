@@ -28,7 +28,7 @@ install-prerequisites-fabric:
 .PHONY: setup-fabric
 setup-fabric:
 	@$(MAKE) -C $(DEVNET) init
-	@CRYPTO_DIR=$(DEVNET)/crypto ./scripts/cp_fabricx.sh
+	@CRYPTO_DIR=$(DEVNET)/crypto ./scripts/cp_xdev.sh
 
 # Clean all the artifacts (configs and bins) built on the controller node (e.g. make clean).
 .PHONY: clean-fabric
