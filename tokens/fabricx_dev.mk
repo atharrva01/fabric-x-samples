@@ -5,7 +5,13 @@
 #
 
 # exported vars
-CONF_ROOT=conf
+#
+# xdev gets its own conf-xdev/ (mirroring fabric3.mk's conf-f3/) rather than sharing conf/ with
+# PLATFORM=fabricx: devnet needs TLS enabled, channel "mychannel", and endorser1-endorsing/
+# endorser2-endorsing MSP entries that the real Ansible-driven fabricx network neither has nor
+# needs (its channel is "arma", TLS is off). Sharing conf/ between the two broke fabricx's CI job
+# when xdev's needs were written into it.
+CONF_ROOT=conf-xdev
 export CONF_ROOT
 
 # devnet (../devnet) is the canonical Fabric-X network, used here unmodified. The full stack
