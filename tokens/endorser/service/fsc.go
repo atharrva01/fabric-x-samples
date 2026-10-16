@@ -16,6 +16,7 @@ import (
 	"github.com/hyperledger-labs/fabric-smart-client/platform/common/services/logging"
 	tmspkg "github.com/LFDT-Panurus/panurus/token"
 	"github.com/LFDT-Panurus/panurus/token/services/network/fabricx/tms"
+	"gopkg.in/yaml.v3"
 )
 
 var logger = logging.MustGetLogger()
@@ -50,9 +51,43 @@ func (f FabricSmartClient) Init(ctx context.Context) error {
 		return fmt.Errorf("failed reading public parameters: %w", err)
 	}
 
-	tmsID := tmspkg.TMSID{Network: "default", Channel: "mychannel", Namespace: "token_namespace"}
+	tmsID, err := f.tmsID()
+	if err != nil {
+		return err
+	}
 	if err := dep.DeployTMSWithPP(tmsID, ppRaw); err != nil {
 		return err
 	}
 	return nil
+}
+
+// coreYAMLTokenConfig mirrors just enough of core.yaml's token.tms block to recover the TMS ID.
+type coreYAMLTokenConfig struct {
+	Token struct {
+		TMS map[string]struct {
+			Network   string `yaml:"network"`
+			Channel   string `yaml:"channel"`
+			Namespace string `yaml:"namespace"`
+		} `yaml:"tms"`
+	} `yaml:"token"`
+}
+
+// tmsID reads the network/channel/namespace to deploy to from core.yaml rather than hardcoding
+// it: the channel name differs per platform (e.g. "arma" on the real Ansible-driven fabricx
+// network, "mychannel" on devnet-based xdev), and this same binary runs on both.
+func (f FabricSmartClient) tmsID() (tmspkg.TMSID, error) {
+	raw, err := os.ReadFile(filepath.Join(f.confDir, "core.yaml"))
+	if err != nil {
+		return tmspkg.TMSID{}, fmt.Errorf("failed reading core.yaml: %w", err)
+	}
+
+	var cfg coreYAMLTokenConfig
+	if err := yaml.Unmarshal(raw, &cfg); err != nil {
+		return tmspkg.TMSID{}, fmt.Errorf("failed parsing core.yaml: %w", err)
+	}
+
+	for _, t := range cfg.Token.TMS {
+		return tmspkg.TMSID{Network: t.Network, Channel: t.Channel, Namespace: t.Namespace}, nil
+	}
+	return tmspkg.TMSID{}, fmt.Errorf("no token.tms entries found in core.yaml")
 }
