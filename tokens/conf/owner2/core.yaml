@@ -63,19 +63,45 @@ fabric:
         mspType: bccsp
         mspID: Org1MSP
         path: ./keys/fabric/user
+      - id: endorser1-endorsing
+        mspType: bccsp
+        mspID: Org1MSP
+        path: ./keys/fabric/endorser1
+      - id: endorser2-endorsing
+        mspType: bccsp
+        mspID: Org2MSP
+        path: ./keys/fabric/endorser2
     tls:
-      enabled: false
+      enabled: true
+      clientAuthRequired: true
+      clientKey:
+        file: ./keys/fabric/tls-client/server.key
+      clientCert:
+        file: ./keys/fabric/tls-client/server.crt
     peers:
       - address: committer-sidecar:4001
         usage: delivery
+        tlsRootCertFile: ./keys/fabric/org-tls-ca.pem
     notificationService:
       endpoints:
         - address: committer-sidecar:4001
+          tls:
+            enabled: true
+            clientCert: ./keys/fabric/tls-client/server.crt
+            clientKey: ./keys/fabric/tls-client/server.key
+            rootCerts:
+              - ./keys/fabric/org-tls-ca.pem
     queryService:
       endpoints:
         - address: committer-query-service:7001
+          tls:
+            enabled: true
+            clientCert: ./keys/fabric/tls-client/server.crt
+            clientKey: ./keys/fabric/tls-client/server.key
+            rootCerts:
+              - ./keys/fabric/org-tls-ca.pem
     channels:
-      - name: arma
+      - name: mychannel
         default: true
 
 token:
@@ -83,7 +109,7 @@ token:
   tms:
     mytms:
       network: default
-      channel: arma
+      channel: mychannel
       namespace: token_namespace
       driver: zkatdlog
       wallets:
